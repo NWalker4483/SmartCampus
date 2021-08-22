@@ -1,0 +1,30 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+opencv-python = "*"
+jupyterlab = "*"
+scikit-image = "==0.16.2"
+matplotlib = "==2.2.3"
+sklearn = "*"
+pandas = "*"
+tdqm = "*"
+argparse = "*"
+torch = "==1.4.0"
+numpy = "==1.18.2"
+tqdm = "==4.43.0"
+easydict = "==1.9"
+skimage = "*"
+pycocotools = "*"
+tensorboardX = "==2.0"
+Pillow = "==7.1.2"
+torchvision = "*"
+yacs = "*"
+tensorboard = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.8"
