@@ -23,6 +23,8 @@ Pillow = "==7.1.2"
 torchvision = "*"
 yacs = "*"
 tensorboard = "*"
+google = "*"
+python-gflags = "*"
 
 [dev-packages]
 

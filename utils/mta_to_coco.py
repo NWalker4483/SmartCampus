@@ -40,9 +40,6 @@ def get_frame_annotation(cam_coords_frame: pd.DataFrame, image_id: int, image_si
     annotations = []
 
     for idx,ped_row in cam_coords_frame.iterrows():
-
-
-
         bbox = [
             int(ped_row["x_top_left_BB"]),
             int(ped_row["y_top_left_BB"]),
@@ -58,8 +55,6 @@ def get_frame_annotation(cam_coords_frame: pd.DataFrame, image_id: int, image_si
         height = bbox[3]
 
         area = float(width * height)
-
-
 
         annotation = {
             "id": annotation_id,
