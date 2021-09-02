@@ -5,6 +5,7 @@ import numpy as np
 import cv2
 import gflags
 import os
+import torchvision
 import sys
 
 def grab_sequences(to_grab, camera_id, args):
@@ -18,7 +19,7 @@ def grab_sequences(to_grab, camera_id, args):
         video_cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
         _, frame = video_cap.read()
 
-        if True:
+        if False:
             flow_cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
             ret, flow = flow_cap.read()
             if not ret: print(f"Failed {frame_num} to Load Flow{os.path.join(args.cameras_path, f'cam_{camera_id}/cam_{camera_id}.flow.mp4')}"); exit()
@@ -32,26 +33,50 @@ def grab_sequences(to_grab, camera_id, args):
             for (seq_id, person_id, p1, p2) in to_grab[frame_num][person]: # Should only be one but thats not a guarentee
                 if person_id not in grabbed:
                     grabbed[person_id] = dict()
-                if seq_id not in grabbed:
+                if seq_id not in grabbed[person_id]:
                     grabbed[person_id][seq_id] = [[],[]]
                 
                 # Crop
                 local_frame = frame[p1[1]:p2[1], p1[0]:p2[0]]
                 local_flow = flow[p1[1]:p2[1], p1[0]:p2[0]]
+
                 # Resize 
                 local_frame = cv2.resize(local_frame, (128, 128), interpolation = cv2.INTER_AREA) 
                 local_flow = cv2.resize(local_flow, (128, 128), interpolation = cv2.INTER_AREA) 
 
+              
+                # Normalize 
+                img_transform = torchvision.transforms.Compose([
+                torchvision.transforms.ToTensor(),
+                torchvision.transforms.Normalize(
+                    mean=[.5,.5,.5],
+                    std=[.5, .5,.5],
+                )])
+                
+                flow_transform = torchvision.transforms.Compose([
+                torchvision.transforms.ToTensor(),
+                torchvision.transforms.Normalize(
+                    mean=[0, 0, 0],
+                    std =[1, 1, 1],
+                )])
+
+                local_frame = img_transform(local_frame).detach().cpu().numpy() 
+                local_flow = flow_transform(local_flow).detach().cpu().numpy() 
+
+                # Join
                 joined = np.concatenate([local_frame, local_flow], axis = 2)
-                info = [camera_id,0,0,0]
+                
+                # Save
+                info = [person_id, frame_num, 0, 0, 0, 0]
                 grabbed[person_id][seq_id][0].append(joined)
                 grabbed[person_id][seq_id][1].append(info)
-    temp = [[],[]]
+    imgs = [] 
+    info = []
     for person_id in grabbed:
         for seq_id in grabbed[person_id]:
-            temp[0].append(grabbed[person_id][seq_id][0])
-            temp[1].append(grabbed[person_id][seq_id][1])
-    np.save_compressed(os.path.join("raw_data/datasets/sequence/mta_ext_short/test",f"cam_{camera_id}/cam_{camera_id}.sequences.npz"), np.asarray(temp))
+            imgs.append(grabbed[person_id][seq_id][0])
+            info.append(grabbed[person_id][seq_id][1])
+    np.savez_compressed(os.path.join("raw_data/datasets/sequence/grandma_me/test",f"cam_{camera_id}.npz"), np.asarray(imgs),  np.asarray(info))
 
 def cap_transitions():
     pass
@@ -103,7 +128,7 @@ def cap_strides(cameras_path, camera_id, stride = 2, length = 8, args = None):
         seq_id = 0
         while (curr < last):
             seq = []
-            for next_frame_num in np.linspace(curr, curr + (FPS * length) + 1, dtype = np.int):
+            for next_frame_num in np.linspace(curr, curr + (FPS * length) + 1, samples, dtype = np.int):
                 if next_frame_num not in dets[person]:
                     # TODO: Look for a close enough detection 
                     break
@@ -132,8 +157,8 @@ if __name__ == "__main__":
     "y_bottom_right_BB"]
 
     Flags = gflags.FLAGS
-    gflags.DEFINE_string("cameras_path", "raw_data/videos/mta_ext_short/test", "training folder")
-    gflags.DEFINE_string("camera_ids", "0,1,2,3,4,5", "camera ids used to train ex. 0,1,2,3")
+    gflags.DEFINE_string("cameras_path", "raw_data/videos/grandma_me/test", "training folder")
+    gflags.DEFINE_string("camera_ids", "0,1", "camera ids used to train ex. 0,1,2,3")
     gflags.DEFINE_bool("multithreaded", False, "use multithreading")
     gflags.DEFINE_bool("calc_flow", False, "recalculate optical flow values")
     gflags.DEFINE_integer("samples", 4, "number of dataLoader workers")

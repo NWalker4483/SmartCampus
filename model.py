@@ -28,7 +28,6 @@ class ConvHead(nn.Module):
 class FeatureExtractionModel(nn.Module):
     def __init__(self, seq_shape, handcraft_feat_len, embed_len=64):
         super(FeatureExtractionModel, self).__init__()
-
         # Defining some parameters
 
         self.seq_len = seq_shape[0]
@@ -53,23 +52,23 @@ class FeatureExtractionModel(nn.Module):
         self.fc2 = nn.Linear(128, embed_len)
 
     def forward(self, images, handcrafted_features):
-
-        # Passing in the input and hidden state into the model and obtaining outputs
         # Convert the list of sequences into a list of the ith image in a sequence
         image_representations = []
+
         for cnn, image in zip(self.cnns, torch.transpose(images, 0, 1)):
             image_representations.append(cnn(image))
+
         # Convert Back to Tensor
         image_representations = torch.stack(image_representations)
 
+        # Passing in the input and hidden state into the model and obtaining outputs
         temporal_representations, _ = self.rnn(image_representations)
 
         # Temporal Pooling
         sequence_representation = torch.mean(temporal_representations, 0)
 
         # Average all image representations across time
-        joined_representation = torch.cat(
-            (sequence_representation, handcrafted_features), dim=1)
+        joined_representation = torch.cat((sequence_representation, handcrafted_features), dim=1)
 
         out_ = self.fc(joined_representation)
         out = self.fc2(out_)
@@ -95,6 +94,7 @@ class EmbeddingComparisonModel(nn.Module):
 class SiameseEmbeddingModel(nn.Module):
     def __init__(self, seq_shape, handcraft_feat_len, embed_len):
         super(SiameseEmbeddingModel, self).__init__()
+        
         self.query = FeatureExtractionModel(
             seq_shape, handcraft_feat_len, embed_len)
         self.compare = EmbeddingComparisonModel(embed_len)
@@ -170,13 +170,13 @@ if __name__ == "__main__":
     batch_size = 2
     embed_len = 64
     seq_shape = (8, 5, 128, 128)
-    handcraft_feat_len = 8 + 2
+    handcraft_feat_len = 8 
 
-    rnd_seqs_A = torch.rand((batch_size, *seq_shape))
-    rnd_feats_plus_time_A = torch.rand((batch_size, handcraft_feat_len + 1))
+    rnd_seqs_A = torch.rand((batch_size, *seq_shape),requires_grad= True)
+    rnd_feats_plus_time_A = torch.rand((batch_size, handcraft_feat_len + 1),requires_grad= True)
 
-    rnd_seqs_B = torch.rand((batch_size, *seq_shape))
-    rnd_feats_plus_time_B = torch.rand((batch_size, handcraft_feat_len + 1))
+    rnd_seqs_B = torch.rand((batch_size, *seq_shape),requires_grad= True)
+    rnd_feats_plus_time_B = torch.rand((batch_size, handcraft_feat_len + 1),requires_grad= True)
 
     test = SiameseEmbeddingModel(
         seq_shape=seq_shape, handcraft_feat_len=handcraft_feat_len, embed_len=embed_len)

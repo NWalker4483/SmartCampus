@@ -15,11 +15,10 @@ if __name__ == '__main__':
 
     Flags = gflags.FLAGS
     gflags.DEFINE_bool("cuda", False, "use cuda")
-    gflags.DEFINE_string("train_path", "raw_data", "training folder")
-    gflags.DEFINE_string("test_path", "raw_data", 'path of testing folder')
-    gflags.DEFINE_string("times", 400, "number of samples to test accuracy")
+    gflags.DEFINE_string("train_path", "raw_data/datasets/sequence/grandma_me/test", "training folder")
+    gflags.DEFINE_string("test_path", "raw_data/datasets/sequence/grandma_me/test", 'path of testing folder')
     gflags.DEFINE_integer("workers", 4, "number of dataLoader workers")
-    gflags.DEFINE_integer("batch_size", 128, "number of batch size")
+    gflags.DEFINE_integer("batch_size", 1, "number of batch size")
     gflags.DEFINE_float("lr", 0.00006, "learning rate")
     gflags.DEFINE_integer(
         "show_every", 10, "show result after each show_every iter.")
@@ -37,6 +36,7 @@ if __name__ == '__main__':
 
     data_transforms = transforms.Compose([
         # transforms.RandomAffine(15),
+        # transforms.Normalize(),
         transforms.ToTensor()
     ])
 
@@ -44,25 +44,27 @@ if __name__ == '__main__':
     print("use gpu:", Flags.gpu_ids, "to train.")
 
     train_set = SequenceTripletDataset(
-        Flags.train_path)
+        Flags.train_path, camera_ids=[0,1])
     test_set = SequencePairDataset(
-        Flags.test_path)
+        Flags.test_path,camera_ids=[0,1])
 
     test_loader = DataLoader(
-        test_set, batch_size=Flags.batch_size, shuffle=False, num_workers=Flags.workers)
+        test_set, batch_size=Flags.batch_size, shuffle=False, num_workers=Flags.workers,
+        sampler = torch.utils.data.RandomSampler(test_set, replacement=True, num_samples=Flags.max_iter))
     # TODO: Research custom sampler inorder to provide harder triplets 
     train_loader = DataLoader(
-        train_set, batch_size=Flags.batch_size, shuffle=True, num_workers=Flags.workers)
-
-    mean_squared_loss = torch.nn.MSELoss()
+        train_set, batch_size=Flags.batch_size, num_workers=Flags.workers, 
+        sampler = torch.utils.data.RandomSampler(train_set, replacement=True, num_samples=Flags.max_iter))
+    
+    distance_loss = torch.nn.MSELoss()
     triplet_margin_loss = torch.nn.TripletMarginLoss(margin=.1, swap=False)
 
     embed_len = 64
-    seq_shape = (8, 5, 128, 128)
-    handcraft_feat_len = 8 + 2
+    seq_shape = train_set[0][0][0].shape
+    handcraft_feat_len = train_set[0][0][1].shape[0]
 
     net = SiameseEmbeddingModel(
-        seq_shape=seq_shape, handcraft_feat_len=handcraft_feat_len, embed_len=embed_len)
+        seq_shape=seq_shape, handcraft_feat_len=handcraft_feat_len - 1, embed_len=embed_len)
 
     ones = torch.ones(Flags.batch_size, 1)
     zeros = torch.zeros(Flags.batch_size, 1)
@@ -93,6 +95,15 @@ if __name__ == '__main__':
         anchor_seq, anchor_feat = anchor
         positive_seq, positive_feat = positive
 
+        negative_seq.requires_grad=True
+        negative_feat.requires_grad=True
+        
+        anchor_seq.requires_grad=True
+        anchor_feat.requires_grad=True
+        
+        positive_seq.requires_grad=True
+        positive_feat.requires_grad=True
+
         if Flags.cuda:
             negative_seq, negative_feat = negative_seq.cuda(), negative_feat.cuda()
             anchor_seq, anchor_feat = anchor_seq.cuda(), anchor_feat.cuda()
@@ -101,12 +112,12 @@ if __name__ == '__main__':
         anchor_embed, positive_embed, scores = net.forward(
             anchor_seq, anchor_feat, positive_seq, positive_feat)
 
-        loss = mean_squared_loss(scores, ones)
+        loss = distance_loss(scores, ones)
 
-        anchor_embed, negative_embed, scores = net.forward(
+        anchor_embed, negative_embed, out = net.forward(
             anchor_seq, anchor_feat, positive_seq, positive_feat)
 
-        loss += mean_squared_loss(scores, zeros)
+        loss += distance_loss(scores, zeros)
 
         loss += triplet_margin_loss(positive_embed,
                                     anchor_embed, negative_embed)
@@ -118,30 +129,32 @@ if __name__ == '__main__':
 
         if batch_id % Flags.show_every == 0 or (batch_id <= 5):
             print('[%d]\tloss:\t%.5f\ttime lapsed:\t%.2f s' % (
-                batch_id, loss_val/Flags.show_every, time.time() - time_start))
+                batch_id, loss_val/(Flags.show_every if batch_id > 5 else 1), time.time() - time_start))
             loss_val = 0
             time_start = time.time()
+
         if batch_id % Flags.save_every == 0:
             torch.save(net.state_dict(), Flags.model_path +
-                       '/model-inter-' + str(batch_id+1) + ".pt")
+                       '/model-inter-' + str(batch_id + 1) + ".pt")
         if batch_id % Flags.test_every == 0:
             right, error = 0, 0
             # for _, ((seqA, featA), (seqB, featB)) in enumerate(test_loader, 1):
+
             #     if Flags.cuda:
-            #         imgA, imgB = imgA.cuda(), imgB.cuda()
-            #     output = net.forward(imgA, imgB).data.cpu().numpy()
-            #     pred = np.argmax(output)
-            #     if pred == 0:
-            #         right += 1
-            #     else:
-            #         error += 1
-            print('*' * 70)
-            print('[%d]\tTest set\tcorrect:\t%d\terror:\t%d\tprecision:\t%f' % (
-                batch_id, right, error, right*1.0/(right+error)))
-            print('*' * 70)
-            queue.append(right*1.0/(right+error))
+            #         seqA, seqB = seqA.cuda(), seqB.cuda()
+            #         featA, featB = featA.cuda(), featB.cuda()
+
+            #     # output = net.forward(imgA, imgB).data.cpu().numpy()
+            #     # pred = np.argmax(output)
+            #     # if pred == 0:
+            #     #     right += 1
+            #     # else:
+            #     #     error += 1
+            # print('*' * 70)
+            # #print('[%d]\tTest set\tcorrect:\t%d\terror:\t%d\tprecision:\t%f' % (batch_id, right, error, right*1.0/((right+error)+1e-5)))
+            # print('*' * 70)
+            # #queue.append(right*1.0/((right+error)+1e-5))
         train_loss.append(loss_val)
-    #  learning_rate = learning_rate * 0.95
 
     with open('train_loss', 'wb') as f:
         pickle.dump(train_loss, f)
