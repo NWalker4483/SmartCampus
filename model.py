@@ -83,7 +83,7 @@ class EmbeddingComparisonModel(nn.Module):
             nn.Linear((embed_len * 2) + 1, 64),
             nn.Sigmoid(),
             nn.Linear(64, 1),
-            nn.Sigmoid()# TODO: Explore BCE with logit loss
+            nn.Sigmoid()
         )
 
     def forward(self, embed_A, time_A, embed_B, time_B):
