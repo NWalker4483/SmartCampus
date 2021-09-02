@@ -3,7 +3,6 @@ import torch
 import numpy as np
 import os
 
-
 class SequenceDataset(Dataset):
     def __init__(self, cameras_path="raw_data/datasets/sequence/mta_ext_short/train", camera_ids=[1], use_onehot=True, add_cam_id=False):
         self.sequences = []

@@ -2,7 +2,7 @@ import torch
 import pickle
 from torch.utils.data import DataLoader
 from dataset import SequenceTripletDataset, SequencePairDataset
-from model import SiameseModelWrapper
+from model import SiameseWrapper
 import time
 import gflags
 import sys
@@ -61,7 +61,7 @@ if __name__ == '__main__':
     seq_shape = train_set[0][0][0].shape
     handcraft_feat_len = train_set[0][0][1].shape[0]
 
-    net = SiameseEmbeddingModel(
+    net = SiameseWrapper(
         seq_shape=seq_shape, handcraft_feat_len=handcraft_feat_len - 1, embed_len=embed_len)
 
     ones = torch.ones(Flags.batch_size, 1)
