@@ -5,7 +5,7 @@ import os
 
 
 class SequenceDataset(Dataset):
-    def __init__(self, cameras_path="raw_data/datasets/sequence/mta_ext_short/train", camera_ids=[1], add_onehot=True, add_cam_id=False):
+    def __init__(self, cameras_path="raw_data/datasets/sequence/mta_ext_short/train", camera_ids=[1], use_onehot=True, add_cam_id=False):
         self.sequences = []
         self.handcrafted = []
         self.labels = []
@@ -16,7 +16,7 @@ class SequenceDataset(Dataset):
             self.labels.append(data["arr_1"][..., :1][:, 0].reshape(-1))
 
             hand_features = data["arr_1"][..., 1:][..., 0]
-            if add_onehot:
+            if use_onehot:
                 one_hot = np.zeros((len(hand_features), max(camera_ids) + 1))
                 one_hot[..., ID] = 1
                 hand_features = np.concatenate([hand_features, one_hot], 1)

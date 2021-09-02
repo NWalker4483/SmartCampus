@@ -2,12 +2,16 @@ import torch
 import pickle
 from torch.utils.data import DataLoader
 from dataset import SequenceTripletDataset, SequencePairDataset
-from model import SiameseEmbeddingModel
+from model import SiameseModelWrapper
 import time
 import gflags
 import sys
 from collections import deque
 import os
+
+def parse_flags():
+    return
+
 
 if __name__ == '__main__':
 
@@ -37,9 +41,9 @@ if __name__ == '__main__':
     print("use gpu:", Flags.gpu_ids, "to train.")
 
     train_set = SequenceTripletDataset(
-        Flags.train_path, camera_ids=[0,1])
+        Flags.train_path, camera_ids=[0,1], use_onehot = True)
     test_set = SequencePairDataset(
-        Flags.test_path,camera_ids=[0,1])
+        Flags.test_path,camera_ids=[0,1], use_onehot = True)
 
     test_loader = DataLoader(
         test_set, batch_size=Flags.batch_size, shuffle=False, num_workers=Flags.workers,
@@ -62,6 +66,7 @@ if __name__ == '__main__':
 
     ones = torch.ones(Flags.batch_size, 1)
     zeros = torch.zeros(Flags.batch_size, 1)
+
     # multi gpu
     if len(Flags.gpu_ids.split(",")) > 1:
         net = torch.nn.DataParallel(net)
@@ -142,7 +147,6 @@ if __name__ == '__main__':
 
                     embA, embB, output = net.forward(seqA, featA, seqB, featB)
                     output = output.data.cpu().numpy().reshape(-1)
-                    print(output)
                     output[output > .5] = 1
                     output[output <= .5] = 0
                     labels = labelA == labelB

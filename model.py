@@ -1,11 +1,12 @@
 import torch
 import torch.nn as nn
+from torchreid.utils import FeatureExtractor
 
-class ConvHead(nn.Module):
+class LeNetHead(nn.Module):
     def __init__(self, input_shape):
         self.sequence_len = input_shape[0]
         # call the parent constructor
-        super(ConvHead, self).__init__()
+        super(LeNetHead, self).__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(in_channels=input_shape[0],
                       out_channels=16, kernel_size=(5, 5)),
@@ -24,10 +25,20 @@ class ConvHead(nn.Module):
     def forward(self, x):
         return self.conv(x)
 
+class OSNet(nn.Module):
+    def __init__(self):
+        
+        extractor = FeatureExtractor(
+            model_name='osnet_x1_0',
+            model_path='a/b/c/model.pth.tar',
+            device='cuda'
+        )
+    def forward(self):
+        pass
 
-class FeatureExtractionModel(nn.Module):
+class CameraFeedHead(nn.Module):
     def __init__(self, seq_shape, handcraft_feat_len, embed_len=64):
-        super(FeatureExtractionModel, self).__init__()
+        super(CameraFeedHead, self).__init__()
         # Defining some parameters
 
         self.seq_len = seq_shape[0]
@@ -35,12 +46,10 @@ class FeatureExtractionModel(nn.Module):
 
         self.hidden_dim = 500
 
-        self.cnns = []
-        for _ in range(self.seq_len):
-            self.cnns.append(ConvHead(self.img_shape))
+        self.cnn = LeNetHead(self.img_shape)
 
         # More Blah
-        self.rnn = nn.RNN(self.cnns[-1].output_size, 500, batch_first=False)
+        self.rnn = nn.RNN(self.cnn.output_size, 500, batch_first=False)
 
         # Temporal Pooling Layer
         # torch.mean(rnn_out)
@@ -55,8 +64,8 @@ class FeatureExtractionModel(nn.Module):
         # Convert the list of sequences into a list of the ith image in a sequence
         image_representations = []
 
-        for cnn, image in zip(self.cnns, torch.transpose(images, 0, 1)):
-            image_representations.append(cnn(image))
+        for image in torch.transpose(images, 0, 1):
+            image_representations.append(self.cnn(image))
 
         # Convert Back to Tensor
         image_representations = torch.stack(image_representations)
@@ -91,11 +100,11 @@ class EmbeddingComparisonModel(nn.Module):
         return self.model(x)
 
 
-class SiameseEmbeddingModel(nn.Module):
+class SiameseModelWrapper(nn.Module):
     def __init__(self, seq_shape, handcraft_feat_len, embed_len):
-        super(SiameseEmbeddingModel, self).__init__()
+        super(SiameseModelWrapper, self).__init__()
         
-        self.query = FeatureExtractionModel(
+        self.query = CameraFeedHead(
             seq_shape, handcraft_feat_len, embed_len)
         self.compare = EmbeddingComparisonModel(embed_len)
 
@@ -114,13 +123,13 @@ class SiameseEmbeddingModel(nn.Module):
         return q1, q2, out
 
 
-class SiameseMultiHeadEmbeddingModel(nn.Module):
+class SiameseMultiHeadModelWrapper(nn.Module):
     def __init__(self, seq_shape, handcraft_feat_len, embed_len, heads=2):
-        super(SiameseEmbeddingModel, self).__init__()
+        super(SiameseMultiHeadModelWrapper, self).__init__()
+        self.heads = []
         for _ in range(heads):
-            pass
-        self.query = FeatureExtractionModel(
-            seq_shape, handcraft_feat_len, embed_len)
+            self.heads = CameraFeedHead(
+                seq_shape, handcraft_feat_len, embed_len)
         self.compare = EmbeddingComparisonModel(embed_len)
 
     def forward(self, img1, feat1, img2, feat2):
@@ -143,7 +152,7 @@ if __name__ == "__main__":
 
     rnd_imgs = torch.rand((1, *input_shape))
 
-    test = ConvHead(input_shape)
+    test = LeNetHead(input_shape)
     print(test(rnd_imgs))
 
     seq_shape = (8, 5, 64, 64)
@@ -153,7 +162,7 @@ if __name__ == "__main__":
     rnd_seqs = torch.rand((2, *seq_shape))
     rnd_feats = torch.rand((2, handcraft_feat_len))
 
-    test = FeatureExtractionModel(seq_shape, handcraft_feat_len, embed_len)
+    test = CameraFeedHead(seq_shape, handcraft_feat_len, embed_len)
     print(test(rnd_seqs, rnd_feats))
 
     embed_len = 64
