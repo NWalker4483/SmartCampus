@@ -9,8 +9,6 @@ import sys
 from collections import deque
 import os
 
-def parse_flags():
-    return
 
 
 if __name__ == '__main__':

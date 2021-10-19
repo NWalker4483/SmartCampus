@@ -2,29 +2,6 @@ import torch
 import torch.nn as nn
 from torchreid.utils import FeatureExtractor
 
-
-class LeNetSequence(nn.Module):
-    def __init__(self, input_shape):
-        self.sequence_len = input_shape[0]
-        # call the parent constructor
-        super(LeNetSequence, self).__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(in_channels=input_shape[0],
-                      out_channels=16, kernel_size=(5, 5)),
-            nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
-            nn.Tanh(),
-            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=(5, 5)),
-            nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2)),
-            nn.Tanh(),
-            nn.Conv2d(in_channels=32, out_channels=32, kernel_size=(5, 5)),
-            nn.Flatten())
-
-        self.output_size = self.conv(
-            torch.rand((1, *input_shape))).data.shape[1]
-
-    def forward(self, x):
-        return self.conv(x)
-
 class OSNetSequence(nn.Module):
     def __init__(self):
         self.extractor = FeatureExtractor(
@@ -39,6 +16,14 @@ class OSNetSequence(nn.Module):
         # Convert Back to Tensor
         image_representations = torch.stack(image_representations)
         return image_representations
+
+class CameraWisePositionalEmbedding(nn.Module):
+    def __init__(self):
+        super(CameraWisePositionalEmbedding, self).__init__()
+
+class MultiHeadedAttention(nn.Module):
+    def __init__(self):
+        pass
 
 class CameraFeedHead(nn.Module):
     def __init__(self, seq_shape, handcraft_feat_len, embed_len=64):

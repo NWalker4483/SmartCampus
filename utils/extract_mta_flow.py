@@ -62,7 +62,7 @@ def thing(mta_dataset_path, camera_ids):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mta_dataset_folder", type=str,default="raw_data/videos/grandma_me/test")
+    parser.add_argument("--mta_dataset_folder", type=str,default="raw_data/videos/MTA_ext_short/test")
     parser.add_argument("--camera_ids", type=str, default="0,1,2,3,4,5")
 
     args = parser.parse_args()

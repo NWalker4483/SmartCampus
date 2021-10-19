@@ -8,7 +8,18 @@ video_cap = cv2.VideoCapture(0)
 
 max_dt = 5 * 24
 tracklets = dict()
-def search_tracklets(src_idx, tracklets):
+
+def MultiCameraTimeConstraint():
+    pass
+
+def SingleCameraTimeConstraint():
+    pass
+
+def generate_tracklets():
+    tracklets = dict()
+    return tracklets
+
+def match_tracklets(src_idx, tracklets):
     pass
 
 grouped_tracklets = []
