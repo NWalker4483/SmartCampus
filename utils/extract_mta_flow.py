@@ -18,14 +18,17 @@ def extract_flow(frame, last_frame):
     # the neural network used five input channels, three for colour and two for 
     # optical flow, and when training and testing with colour information only, three input channels were used.
     hsv = np.zeros_like(last_frame)
-    hsv[...,1] = 255
+    #hsv[...,2] = 255
     frame = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
     last_frame = cv2.cvtColor(last_frame,cv2.COLOR_BGR2GRAY)
     flow = cv2.calcOpticalFlowFarneback(last_frame, frame, None, 0.5, 3, 15, 3, 5, 1.2, 0)
-    mag, ang = cv2.cartToPolar(flow[...,0], flow[...,1])
-    hsv[...,0] = ang * 180/np.pi/2
-    hsv[...,2] = cv2.normalize(mag,None,0,255,cv2.NORM_MINMAX)
-    bgr = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
+    # mag, ang = cv2.cartToPolar(flow[...,0], flow[...,1])
+    # hsv[...,0] = ang * 180/np.pi/2
+    # hsv[...,2] = cv2.normalize(mag,None,0,255,cv2.NORM_MINMAX)
+    # bgr = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
+    hsv[...,0] = flow[...,0]
+    hsv[...,1] = flow[...,1]
+    bgr = hsv 
     return bgr
 
 def thing(mta_dataset_path, camera_ids):
@@ -62,8 +65,8 @@ def thing(mta_dataset_path, camera_ids):
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--mta_dataset_folder", type=str,default="raw_data/videos/MTA_ext_short/test")
-    parser.add_argument("--camera_ids", type=str, default="0,1,2,3,4,5")
+    parser.add_argument("--mta_dataset_folder", type=str,default="raw_data/videos/MTA_ext_short/train")
+    parser.add_argument("--camera_ids", type=str, default="0,1,2")
 
     args = parser.parse_args()
     args.camera_ids = list(map(int,args.camera_ids.split(",")))
@@ -71,8 +74,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    thing(mta_dataset_path=args.mta_dataset_folder
-                        ,camera_ids=args.camera_ids)
+    thing(mta_dataset_path=args.mta_dataset_folder, camera_ids=args.camera_ids)
 
 if __name__ == '__main__':
     main()

@@ -4,3 +4,7 @@ raw_data/
 log/
 train_loss
 old/
+tracks/
+*.tracklet.txt
+
+  

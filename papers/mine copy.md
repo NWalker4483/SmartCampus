@@ -1,7 +1,7 @@
 # APL Smart Campus Multi-Camera Tracking Update #1 
 #### By: Nile Walker on 10/1/21
 Where did I come from?
-Multi Camera Multi Target Tracking within expandable static camera networks
+Establishing regions of identity transfer across static multi camera systems
 
 ## Objective Recap:
 * Given footage from multiple views within a scene, identify individuals traveling through the scene and maintain that identity across the multiple perspectives. Any solution should be able to incorporate new cameras down the line with limited disturbance to the performance of re-identification within cameras present during initial training.
@@ -21,17 +21,23 @@ Given this it would be extremely useful to if we could leverage the fact that we
 * Identities observed at significantly different times or with a large gap in between them are very unlikely to be the same person.
 * Cameras are often placed along passageways and common areas in such a way that the particular sequence of cameras that an individual passes through is predictable
 
+<!-- NOTE TO REWRITE: -->
+
 While the first two are fairly trivial to apply the last one requires that we have some information on the real world placement/relationship of each of the cameras which according to our assumptions we don't have. And without some multi camera track-lets to train from we can't just observe which cameras people tend to reappear in. So in-order to get around this we need some unsupervised method to quantify which camera X identities from camera Y are likely to reappear in.
 
-### **Where am I?**
-Related to the previous problem in order to have a model that can predict which camera an identity is likely to reappear in we need some camera representation that can be understood and output by the model. A one-hot encoding is initially attractive as its intuitive and discrete but for reasons I'll go into later it throws away very useful information and doesn't expand well with new cameras.
+<!-- ### **Where am I?**
+Related to the previous problem in order to have a model that can predict which camera an identity is likely to reappear in we need some camera representation that can be understood and output by the model. A one-hot encoding is initially attractive as its intuitive and discrete but for reasons I'll go into later it throws away very useful information and doesn't expand well with new cameras. -->
 
 ## Current Solutions in Code:
 ### **Where am I and where did I come from?**
 My approach attempts to solve these two problems together, and leverages the regularity and large amount of data available in the surveillance space to correlate cameras.
 
 As a pre-processing step a deep-sort model is run over all available video to generate running track-lets containing a camera ID, a pseudo-ID from deep-sort, a list of bounding boxes, and the corresponding frames on which the deductions were made. 
+ 
+ 
+ by reframing the Multi camera tracking problem into a graft effusion problem we're able to  sidestep the issue of making a continuous and discrete prediction. I buy breaking each image into patches and
 
+  the graph creation has destroyed explicit information about which patches of Come from nearby sections of one camera is here so in order to re-create this information
 <img src="" alt="Association Plot"/>
 
 We perform learning in three discrete stages we learn which cameras are related to one another then we learn which areas in a particular camera are related to
