@@ -6,5 +6,4 @@ train_loss
 old/
 tracks/
 *.tracklet.txt
-
-  
+models/

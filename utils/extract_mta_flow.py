@@ -49,6 +49,7 @@ def thing(mta_dataset_path, camera_ids):
         video_writer = cv2.VideoWriter()
         video_writer.open(output_path, fourcc, fps, last_frame.shape[:-1][::-1], True) 
         video_writer.write(np.zeros_like(last_frame))
+        
         # TODO: Get Frame Count 
         pbar = tqdm(total=int(video_capture.get(cv2.CAP_PROP_FRAME_COUNT)) - 1)
         
@@ -66,7 +67,7 @@ def thing(mta_dataset_path, camera_ids):
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--mta_dataset_folder", type=str,default="raw_data/videos/MTA_ext_short/train")
-    parser.add_argument("--camera_ids", type=str, default="0,1,2")
+    parser.add_argument("--camera_ids", type=str, default="")
 
     args = parser.parse_args()
     args.camera_ids = list(map(int,args.camera_ids.split(",")))
