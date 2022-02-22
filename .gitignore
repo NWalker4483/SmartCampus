@@ -7,3 +7,7 @@ old/
 tracks/
 *.tracklet.txt
 models/
+.vscode/
+protected_samples/
+*/__pycache__/
+repos/
