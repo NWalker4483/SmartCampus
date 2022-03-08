@@ -4,6 +4,7 @@ from dipy.segment.metric import AveragePointwiseEuclideanMetric
 from dipy.tracking.streamline import length
 import numpy as np
 from tqdm import tqdm
+from dipy.viz.app import distinguishable_colormap
 
 import cv2
 import numpy as np
@@ -173,7 +174,7 @@ class SegmentingQuickBundles(Clustering):
    
 
 if __name__ == "__main__":
-    from dipy.viz.app import distinguishable_colormap
+    
     from utils import traclus_2_streamlines
     trails = np.load('paths.npy', allow_pickle=True)
 
