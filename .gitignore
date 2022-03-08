@@ -2,6 +2,12 @@ raw_data/
 *.weights
 .ipynb_checkpoints/
 log/
-papers/
 train_loss
 old/
+tracks/
+*.tracklet.txt
+models/
+.vscode/
+protected_samples/
+*/__pycache__/
+repos/
