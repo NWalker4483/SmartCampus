@@ -53,3 +53,6 @@ finally:
     if args.correct_fps:
         pass
     pass
+
+# python mjpg-downloader.py --url http://194.14.32.91/mjpg/video.mjpg --folder .
+# python mjpg-downloader.py --url http://184.189.98.38/mjpg/video.mjpg --folder out

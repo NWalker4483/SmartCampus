@@ -11,10 +11,7 @@ class Group(object):
         pass
     def update(self):
         pass
-
-class TrajectoryGroup():
-    pass
-
+    
 class Trajectory():
     def __init__(self, id_) -> None:
         self.id = id_
@@ -28,8 +25,6 @@ def main():
     clusters = dict() # TODO: Replace with clustermap
     unmatched = dict()
 
-
-    #video = cv2.VideoCapture(0)
     FPS = 0
     
     cam_id = 62
